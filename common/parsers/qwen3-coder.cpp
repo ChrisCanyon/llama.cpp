@@ -141,10 +141,14 @@ common_chat_params common_chat_params_init_qwen3_coder(const common_chat_templat
 
                 // Accept required arguments in any order, as Qwen does not always adhere to the
                 // order provided.
-                auto args = p.permute("tool-" + std::to_string(tool_index) + "-args", required_args);
+                auto optional = p.eps();
                 if (!optional_args.empty()) {
-                    args = args + p.zero_or_more(p.choice(optional_args));
+                    optional = p.zero_or_more(p.choice(optional_args));
+                    for (auto & required : required_args) {
+                        required = optional + required;
+                    }
                 }
+                auto args = p.permute("tool-" + std::to_string(tool_index) + "-args", required_args) + optional;
 
                 auto func = p.tool(p.tool_open("<function=" + p.tool_name(p.literal(name)) + ">\n") +
                                    p.tool_args(args) +

@@ -3774,6 +3774,30 @@ static void test_template_output_peg_parsers(bool detailed_debug) {
             .expect_reconstruction()
             .run();
 
+        // Optional parameters can precede or interleave required parameters.
+        for (const auto & scenario : std::vector<std::pair<std::string, std::string>>{
+                { "<parameter=opt2>\n200\n</parameter>\n"
+                  "<parameter=req1>\nhello\n</parameter>\n"
+                  "<parameter=req2>\n42\n</parameter>\n",
+                  R"({"opt2":200,"req1":"hello","req2":42})" },
+                { "<parameter=req1>\nhello\n</parameter>\n"
+                  "<parameter=opt2>\n200\n</parameter>\n"
+                  "<parameter=req2>\n42\n</parameter>\n",
+                  R"({"req1":"hello","opt2":200,"req2":42})" },
+                { "<parameter=opt2>\n200\n</parameter>\n"
+                  "<parameter=req2>\n42\n</parameter>\n"
+                  "<parameter=req1>\nhello\n</parameter>\n",
+                  R"({"opt2":200,"req2":42,"req1":"hello"})" } }) {
+            tst.test("<tool_call>\n<function=tool_2req_4opt>\n" + scenario.first +
+                     "</function>\n</tool_call>")
+                .tools({ tool_2req_4opt })
+                .expect_tool_calls({
+                    { "tool_2req_4opt", scenario.second, {} },
+                })
+                .expect_reconstruction()
+                .run();
+        }
+
         // Test flexible optional argument ordering (2 required + 4 optional, reversed optional order)
         tst.test(
                "<tool_call>\n"
