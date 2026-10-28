@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN_PARTS = {"backup", "snapshot", "source-copy", "old-source", "scratch"}
 GENERATED_SUFFIXES = {".exe", ".dll", ".obj", ".pdb", ".gguf", ".safetensors", ".pt"}
-LOCAL_PATH = re.compile(r"(?i)(?:[A-Z]:[/\\](?:Users|workspace)[/\\]|file:///)" )
+LOCAL_PATH = re.compile(r"(?i)(?:[A-Z]:[/\\](?:Users|workspace)[/\\]|file:///)")
 TEXT_SUFFIXES = {".c", ".cc", ".cpp", ".h", ".hpp", ".py", ".md", ".txt", ".json", ".yml", ".yaml", ".toml", ".sh", ".ps1"}
 
 
@@ -36,9 +36,9 @@ def main() -> int:
             if LOCAL_PATH.search(path.read_text(encoding="utf-8", errors="replace")):
                 failures.append(f"machine-specific path: {name}")
     if failures:
-        print("Fork boundary check failed:\n" + "\n".join(f"- {entry}" for entry in failures), file=sys.stderr)
+        sys.stderr.write("Fork boundary check failed:\n" + "\n".join(f"- {entry}" for entry in failures) + "\n")
         return 1
-    print(f"Fork boundary check passed: {len(changed)} changed paths")
+    sys.stdout.write(f"Fork boundary check passed: {len(changed)} changed paths\n")
     return 0
 
 
