@@ -1,0 +1,27 @@
+name: Personal fork boundaries
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check changed files
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          PREVIOUS_COMMIT: ${{ github.event.before }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            base="origin/$BASE_BRANCH"
+          elif [ "$PREVIOUS_COMMIT" = "0000000000000000000000000000000000000000" ]; then
+            base="HEAD^"
+          else
+            base="$PREVIOUS_COMMIT"
+          fi
+          git cat-file -e "$base^{commit}"
+          python3 scripts/check_fork_boundaries.py --base "$base"
