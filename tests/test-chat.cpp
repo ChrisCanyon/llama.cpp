@@ -4900,6 +4900,35 @@ static void test_template_output_peg_parsers(bool detailed_debug) {
             .expect_reconstruction()
             .run();
 
+        for (const std::string effort : { "low", "medium" }) {
+            const std::string expected_end = effort == "low" ? "</ifm|think_faster>" : "</ifm|think_fast>";
+
+            tst.test("I'm\nthinking" + expected_end + "Hello, world!\nWhat's up?")
+                .reasoning_format(COMMON_REASONING_FORMAT_AUTO)
+                .chat_template_kwargs({ { "reasoning_effort", json(effort).dump() } })
+                .expect(message_assist_thoughts)
+                .run();
+
+            tst.test("I'm\nthinking</ifm|think>Hello, world!\nWhat's up?")
+                .reasoning_format(COMMON_REASONING_FORMAT_AUTO)
+                .chat_template_kwargs({ { "reasoning_effort", json(effort).dump() } })
+                .expect(message_assist_thoughts)
+                .run();
+
+            tst.test(
+                   "I'm\nthinking</ifm|think><ifm|tool_calls>\n"
+                   "<ifm|tool_call>special_function\n"
+                   "<ifm|arg_key>arg1</ifm|arg_key>\n"
+                   "<ifm|arg_value>1</ifm|arg_value>\n"
+                   "</ifm|tool_call>\n"
+                   "</ifm|tool_calls>")
+                .reasoning_format(COMMON_REASONING_FORMAT_AUTO)
+                .chat_template_kwargs({ { "reasoning_effort", json(effort).dump() } })
+                .tools({ special_function_tool })
+                .expect(message_assist_call_thoughts)
+                .run();
+        }
+
         tst.test("I'm\nthinking")
             .reasoning_format(COMMON_REASONING_FORMAT_AUTO)
             .expect_reasoning("I'm\nthinking")
